@@ -117,6 +117,19 @@ app.delete('/api/tickets/:id', async (req, res) => {
   }
 });
 
+// 整理券の取得
+app.get('/api/tickets/:id', async (req, res) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) {
+      return res.status(404).send('整理券が見つかりません');
+    }
+    res.json(ticket);
+  } catch (error) {
+    res.status(500).send('サーバーエラー');
+  }
+});
+
 // サーバー起動
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

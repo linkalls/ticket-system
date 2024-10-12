@@ -95,6 +95,7 @@ function renderTickets() {
         整理券番号: ${ticket.ticketNumber} - 状態: <span class="${statusClass} text-white rounded p-1">${ticket.status}</span>
       </div>
       <div class="flex items-center">
+        <a href="detail.html?id=${ticket._id}" class="bg-blue-500 text-white rounded p-1 mr-2">詳細</a>
         <button class="bg-yellow-500 text-white rounded p-1 mr-2" onclick="showStatusModal('${ticket._id}', '${ticket.status}')">状態更新</button>
         <button class="bg-red-500 text-white rounded p-1" onclick="confirmDeleteTicket('${ticket._id}')">削除</button>
         <div class="qrcode mt-2 sm:mt-0 ml-2" id="qrcode-${ticket.ticketNumber}"></div>
