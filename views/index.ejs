@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>整理券システム</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto mt-5 px-4">
+        <h1 class="text-2xl font-bold text-center mb-5">整理券システム</h1>
+        <div class="flex justify-between items-center mb-5">
+            <form action="/tickets" method="POST">
+                <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    整理券発行
+                </button>
+            </form>
+            <a href="/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                ログアウト
+            </a>
+        </div>
+        <h2 class="text-xl font-bold mb-3">発行された整理券</h2>
+        <ul id="ticketList" class="space-y-4">
+            <% tickets.forEach(ticket => { %>
+              <li class="flex flex-col sm:flex-row items-center justify-between border-b p-2">
+                <div class="flex-1 mb-2 sm:mb-0">
+                        整理券番号: <%= ticket.ticketNumber %> - 状態:
+                        <span class="<%= ticket.status === '呼び出し済み' ? 'bg-green-500' : 'bg-red-500' %> text-white rounded p-1">
+                            <%= ticket.status %>
+                        </span>
+                    </div>
+                    <div class="flex items-center">
+                        <a href="/tickets/<%= ticket._id %>" class="bg-blue-500 hover:bg-blue-700 text-white rounded p-1 mr-2">詳細</a>
+                        <form action="/tickets/<%= ticket._id %>/update" method="POST" class="inline">
+                            <select name="status" onchange="this.form.submit()" class="bg-yellow-500 text-white rounded p-1 mr-2">
+                                <option value="待機中" <%= ticket.status === '待機中' ? 'selected' : '' %>>待機中</option>
+                                <option value="呼び出し済み" <%= ticket.status === '呼び出し済み' ? 'selected' : '' %>>呼び出し済み</option>
+                            </select>
+                        </form>
+                        <form action="/tickets/<%= ticket._id %>/delete" method="POST" class="inline" onsubmit="return confirm('本当にこの整理券を削除しますか？');">
+                            <button type="submit" class="bg-red-500 hover:bg-red-700 text-white rounded p-1">削除</button>
+                        </form>
+                        <img src="data:image/png;base64,<%= ticket.qrCode %>" alt="QRコード" class="w-20 h-20 ml-2">
+                      </div>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+
+    <!-- 新規作成モーダル -->
+<div id="create-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <h2 class="text-xl font-bold mb-4">新規整理券発行</h2>
+    <form action="/tickets" method="POST" id="create-form">
+      <div class="mb-4">
+        <label for="customerName" class="block text-gray-700 text-sm font-bold mb-2">顧客名</label>
+        <input type="text" id="customerName" name="customerName" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+      </div>
+      <div class="mb-4">
+        <label for="phoneNumber" class="block text-gray-700 text-sm font-bold mb-2">電話番号</label>
+        <input type="tel" id="phoneNumber" name="phoneNumber" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+      </div>
+      <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        発行
+      </button>
+      <button type="button" onclick="hideCreateModal()" class="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+        キャンセル
+      </button>
+    </form>
+  </div>
+</div>
+<script>
+  function showCreateModal() {
+    document.getElementById('create-modal').classList.remove('hidden');
+  }
+  
+  function hideCreateModal() {
+    document.getElementById('create-modal').classList.add('hidden');
+  }
+  </script>
+</body>
+</html>
