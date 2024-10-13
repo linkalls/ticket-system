@@ -11,8 +11,12 @@
         <h1 class="text-2xl font-bold text-center mb-5">整理券詳細</h1>
         <div class="bg-white p-5 rounded shadow-md">
             <p>整理券番号: <%= ticket.ticketNumber %></p>
-            <p>発行日時: <%= new Date(ticket.issuedAt).toLocaleString() %></p>
-            <p>状態: <%= ticket.status %></p>
+            <p class="mb-2">発行日時: <%= new Date(ticket.issuedAt).toLocaleString() %></p>
+            <p>状態: 
+                <span class="<%= ticket.status === '呼び出し済み' ? 'bg-green-500' : 'bg-red-500' %> text-white rounded p-1">
+                    <%= ticket.status %>
+                </span>
+            </p>
             <div class="mt-5">
                 <img src="data:image/png;base64,<%= ticket.qrCode %>" alt="QR Code">
             </div>
