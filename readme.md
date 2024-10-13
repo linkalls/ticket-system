@@ -2,7 +2,7 @@
 
 # 整理券システム
 
-このプロジェクトは、Node.jsとExpressを使用した整理券発行システムです。MongoDBをデータベースとして使用し、Reactをフロントエンドフレームワークとして採用しています。
+このプロジェクトは、Node.jsとExpressを使用した整理券発行システムです。MongoDBをデータベースとして使用し、ejsをフロントエンドフレームワークとして採用しています。
 
 ## 機能概要
 
@@ -18,8 +18,7 @@
 
 - バックエンド：Node.js、Express、Mongoose
 - データベース：MongoDB
-- フロントエンド：React
-- 認証：JSON Web Token (JWT)
+- フロントエンド：esj
 - プッシュ通知：Web Push API
 - QRコード生成：qrcodeライブラリ
 
@@ -43,7 +42,6 @@
 4. 環境変数ファイル（.env）を作成し、以下の情報を設定します：
    ```
    MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
    ```
 
 5. データベースをシードします。
