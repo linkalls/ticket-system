@@ -11,6 +11,8 @@ const statusModal = document.getElementById('statusModal');
 const statusSelect = document.getElementById('statusSelect');
 const cancelBtn = document.getElementById('cancelBtn');
 const saveBtn = document.getElementById('saveBtn');
+const ticketInfoModal = document.getElementById('ticketInfoModal');
+const ticketInfoContent = document.getElementById('ticketInfoContent');
 
 // ログインボタンのクリックイベント
 loginBtn.addEventListener('click', async () => {
@@ -56,6 +58,8 @@ issueTicketBtn.addEventListener('click', async () => {
       throw new Error('整理券の発行に失敗しました。');
     }
 
+    const ticket = await response.json();
+    showTicketInfoModal(ticket); // ポップアップでチケット情報を表示
     await fetchTickets(); // 整理券を再取得して表示
   } catch (error) {
     alert(error.message);
@@ -98,19 +102,19 @@ function renderTickets() {
         <a href="detail.html?id=${ticket._id}" class="bg-blue-500 text-white rounded p-1 mr-2">詳細</a>
         <button class="bg-yellow-500 text-white rounded p-1 mr-2" onclick="showStatusModal('${ticket._id}', '${ticket.status}')">状態更新</button>
         <button class="bg-red-500 text-white rounded p-1" onclick="confirmDeleteTicket('${ticket._id}')">削除</button>
-        <div class="qrcode mt-2 sm:mt-0 ml-2" id="qrcode-${ticket.ticketNumber}"></div>
+        <div class="qrcode mt-2 sm:mt-0 ml-2" id="qrcode-${ticket._id}"></div>
       </div>
     `;
     ticketList.appendChild(li);
     // QRコードを生成
-    generateQRCode(ticket.ticketNumber);
+    generateQRCode(ticket._id, `qrcode-${ticket._id}`);
   });
 }
 
 // QRコードを生成する関数
-function generateQRCode(ticketNumber) {
-  $(`#qrcode-${ticketNumber}`).qrcode({
-    text: `http://example.com/ticket/${ticketNumber}`, // QRコードに埋め込むURL
+function generateQRCode(ticketId, elementId) {
+  $(`#${elementId}`).qrcode({
+    text: `http://127.0.0.1:5500/frontend/detail.html?id=${ticketId}`, // QRコードに埋め込むURL
     width: 100,
     height: 100,
   });
@@ -187,3 +191,19 @@ async function deleteTicket(ticketId) {
     alert(error.message);
   }
 }
+
+// チケット情報を表示するポップアップを表示する関数
+function showTicketInfoModal(ticket) {
+  ticketInfoContent.innerHTML = `
+    <p>整理券番号: ${ticket.ticketNumber}</p>
+    <p>発行日時: ${new Date(ticket.issuedAt).toLocaleString()}</p>
+    <p>状態: ${ticket.status}</p>
+    <div id="qrcode-modal"></div>
+  `;
+  ticketInfoModal.classList.remove('hidden');
+  generateQRCode(ticket._id, 'qrcode-modal'); // QRコードを生成
+}
+
+document.getElementById('closeTicketInfoModal').addEventListener('click', () => {
+  ticketInfoModal.classList.add('hidden');
+});
