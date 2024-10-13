@@ -3,8 +3,11 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import cookieParser from "cookie-parser";
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+// import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
+// import { dirname, join } from 'path';
+import { dirname, join } from 'node:path';
+
 import qrcode from 'qrcode';
 import webpush from 'web-push';
 
@@ -185,7 +188,7 @@ app.get("/logout", (req, res) => {
 
 // ルート: 新規整理券発行
 app.post("/tickets", isAuthenticated, async (req, res) => {
-    try {
+        try {
       const lastTicket = await Ticket.findOne().sort({ ticketNumber: -1 });
       const newTicketNumber = lastTicket ? lastTicket.ticketNumber + 1 : 1;
       const newTicket = new Ticket({
@@ -194,18 +197,20 @@ app.post("/tickets", isAuthenticated, async (req, res) => {
         issuedAt: new Date()
       });
       await newTicket.save();
-  
+    
       // QRコード生成
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const qrCode = await generateQRCode(`${baseUrl}/tickets/${newTicket._id}`);
-  
+      console.log(req.cookies.token);
+      const isAuthenticated = req.cookies.token; // ここで認証情報を取得
       // 新規作成したチケットの詳細を表示
-      res.render("detail", { ticket: { ...newTicket.toObject(), qrCode } });
+      res.render("detail", { ticket: { ...newTicket.toObject(), qrCode }, isAuthenticated ,ticketId: newTicket._id}); // isAuthenticatedを渡す
     } catch (error) {
       console.error(error);
       res.status(500).render('error', { message: '整理券の発行に失敗しました' });
     }
-  });
+  }
+  )
 
 // ルート: 整理券の状態更新
 app.post("/tickets/:id/update", isAuthenticated, async (req, res) => {
