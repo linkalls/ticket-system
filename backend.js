@@ -6,8 +6,15 @@ import cookieParser from "cookie-parser";
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import qrcode from 'qrcode';
+import webpush from 'web-push';
+
 
 dotenv.config();
+
+// VAPIDキーの設定
+const publicVapidKey = 'BFOY7agJI1l5jWROufqE5ctlD9yKTudycNXHZ_oUpXaK2ew-OyAmXV13YY3DQCQQBwkivmkFh_UN3zy8OcP7uAc';
+const privateVapidKey = 'ZxjYVKE6oxOT0ecDbSVZOFNFLx_nSPJABVJiFJwsAsA';
+webpush.setVapidDetails('mailto:example@yourdomain.org', publicVapidKey, privateVapidKey);
 
 async function generateQRCode(text) {
     const opts = {
@@ -72,6 +79,54 @@ const isAuthenticated = (req, res, next) => {
     res.redirect("/login");
   }
 };
+
+
+
+// サブスクリプションを保存するための配列
+let subscriptions = [];
+
+// サブスクリプションを受け取るエンドポイント
+app.post('/api/subscribe', (req, res) => {
+  const subscription = req.body.subscription;
+  const ticketId = req.body.ticketId;
+  subscriptions.push({ subscription, ticketId });
+  res.status(201).json({});
+});
+
+// 整理券の状態が「受け取り済み」になったときに通知を送信する関数
+async function sendNotification(ticketId) {
+  const payload = JSON.stringify({
+    title: '整理券の状態が更新されました',
+    body: '整理券の状態が「受け取り済み」になりました'
+  });
+
+  subscriptions = subscriptions.filter(sub => sub.ticketId === ticketId);
+  for (const sub of subscriptions) {
+    try {
+      await webpush.sendNotification(sub.subscription, payload);
+    } catch (error) {
+      console.error('通知の送信に失敗しました:', error);
+    }
+  }
+}
+
+// 整理券の状態を更新するエンドポイント
+app.patch('/api/tickets/:id', async (req, res) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    ticket.status = req.body.status;
+    await ticket.save();
+
+    if (ticket.status === '受け取り済み') {
+      await sendNotification(ticket._id);
+    }
+
+    res.json(ticket);
+  } catch (error) {
+    res.status(500).json({ message: '状態の更新に失敗しました' });
+  }
+});
+
 
 // ルート: ホームページ
 app.get("/", isAuthenticated, async (req, res) => {
@@ -177,6 +232,7 @@ app.post("/tickets/:id/delete", isAuthenticated, async (req, res) => {
 app.get("/tickets/:id", async (req, res) => {
     try {
       const ticket = await Ticket.findById(req.params.id);
+    //   console.log(req.params.id);
       if (!ticket) {
         return res.status(404).render('error', { message: '整理券が見つかりません' });
       }
@@ -188,7 +244,7 @@ app.get("/tickets/:id", async (req, res) => {
       // 認証情報をテンプレートに渡す
       const isAuthenticated = !!req.cookies.token;
   
-      res.render("detail", { ticket: { ...ticket.toObject(), qrCode }, isAuthenticated });
+      res.render("detail", { ticket: { ...ticket.toObject(), qrCode }, isAuthenticated,ticketId: ticket });
     } catch (error) {
       console.error(error);
       res.status(500).render('error', { message: '整理券の取得に失敗しました' });
