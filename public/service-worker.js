@@ -1,11 +1,8 @@
 self.addEventListener('push', event => {
   const data = event.data.json();
-  const options = {
+  console.log('Push received:', data);
+  self.registration.showNotification(data.title, {
     body: data.body,
-    icon: 'icon.png',
-    badge: 'badge.png'
-  };
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+    icon: '/icon.png'
+  });
 });
