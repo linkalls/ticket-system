@@ -3,9 +3,9 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import bcrypt from "bcryptjs"
 import cookieParser from "cookie-parser"
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url"
+import { dirname, join } from "path"
 // import { fileURLToPath } from "node:url"
-import { dirname, join } from 'path';
 // import { dirname, join } from "node:path"
 
 import qrcode from "qrcode"
@@ -78,7 +78,7 @@ const Subscription = mongoose.model(
     ticketId: { type: mongoose.Schema.Types.ObjectId, ref: "Ticket", required: true },
     subscription: { type: Object, required: true },
   })
-);
+)
 
 // ミドルウェア: 認証チェック
 const isAuthenticated = (req, res, next) => {
@@ -94,48 +94,47 @@ const isAuthenticated = (req, res, next) => {
 let subscriptions = []
 
 // サブスクリプションを保存するエンドポイント
-app.post('/api/subscribe', async (req, res) => {
-  const { subscription, ticketId } = req.body;
-  console.log('Received subscription:', subscription);
-  console.log('Received ticketId:', ticketId);
+app.post("/api/subscribe", async (req, res) => {
+  const { subscription, ticketId } = req.body
+  console.log("Received subscription:", subscription)
+  console.log("Received ticketId:", ticketId)
 
   try {
     // サブスクリプションを保存
-    const newSubscription = new Subscription({ ticketId, subscription });
-    await newSubscription.save();
+    const newSubscription = new Subscription({ ticketId, subscription })
+    await newSubscription.save()
 
-    res.status(201).json({});
+    res.status(201).json({})
   } catch (error) {
-    console.error('サブスクリプションの保存に失敗しました:', error);
-    res.status(500).json({ error: 'サブスクリプションの保存に失敗しました' });
+    console.error("サブスクリプションの保存に失敗しました:", error)
+    res.status(500).json({ error: "サブスクリプションの保存に失敗しました" })
   }
-});
-
+})
 
 // 整理券の状態が「受け取り済み」になったときに通知を送信する関数
 async function sendNotification(ticketId) {
-  console.log(`sendNotification function called with ticketId: ${ticketId}`);
-  console.log(`Sending notification for ticketId: ${ticketId}`);
+  console.log(`sendNotification function called with ticketId: ${ticketId}`)
+  console.log(`Sending notification for ticketId: ${ticketId}`)
   const payload = JSON.stringify({
     title: "整理券の状態が更新されました",
     body: "整理券の状態が「呼び出し済み」になりました",
-  });
+  })
 
   try {
     // サブスクリプションをMongoDBから取得
-    const subscriptions = await Subscription.find({ ticketId });
-    console.log(`Filtered subscriptions: ${JSON.stringify(subscriptions)}`);
+    const subscriptions = await Subscription.find({ ticketId })
+    console.log(`Filtered subscriptions: ${JSON.stringify(subscriptions)}`)
 
     for (const sub of subscriptions) {
       try {
-        await webpush.sendNotification(sub.subscription, payload);
-        console.log(`Notification sent to subscription: ${sub.subscription.endpoint}`);
+        await webpush.sendNotification(sub.subscription, payload)
+        console.log(`Notification sent to subscription: ${sub.subscription.endpoint}`)
       } catch (error) {
-        console.error("通知の送信に失敗しました:", error);
+        console.error("通知の送信に失敗しました:", error)
       }
     }
   } catch (error) {
-    console.error("サブスクリプションの取得に失敗しました:", error);
+    console.error("サブスクリプションの取得に失敗しました:", error)
   }
 }
 
