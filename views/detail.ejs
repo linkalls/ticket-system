@@ -1,37 +1,37 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>整理券詳細</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
     <script defer src="/frontend/detail.js"></script>
-</head>
-<body class="bg-gray-100">
+  </head>
+  <body class="bg-gray-100">
     <div class="container mx-auto mt-5 px-4">
-        <h1 class="text-2xl font-bold text-center mb-5">整理券詳細</h1>
-        <div class="bg-white p-5 rounded shadow-md">
-            <p>整理券番号: <%= ticket.ticketNumber %></p>
-            <p class="mb-2">発行日時: <%= new Date(ticket.issuedAt).toLocaleString() %></p>
-            <p>状態: 
-                <span class="<%= ticket.status === '呼び出し済み' ? 'bg-green-500' : 'bg-red-500' %> text-white rounded p-1">
-                    <%= ticket.status %>
-                </span>
-            </p>
-            <div class="mt-5">
-                <img src="data:image/png;base64,<%= ticket.qrCode %>" alt="QR Code">
-            </div>
-            <% if (isAuthenticated) { %>
-                <div class="mt-5">
-                    <a href="/" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">戻る</a>
-                </div>
-            <% } %>
-            <button id="notifyBtn" class="bg-blue-500 text-white rounded p-2 mt-5">通知をオンにする</button>
-            <!-- ticketId を隠し要素として追加 -->
-            <div id="ticketId" style="display: none;"><%= ticketId %></div> <!-- 修正: ticketIdを正しく表示 -->
+      <h1 class="text-2xl font-bold text-center mb-5">整理券詳細</h1>
+      <div class="bg-white p-5 rounded shadow-md">
+        <p>整理券番号: <%= ticket.ticketNumber %></p>
+        <p class="mb-2">発行日時: <%= new Date(ticket.issuedAt).toLocaleString() %></p>
+        <p>
+          状態:
+          <span id="ticketStatus" class="<%= ticket.status === '呼び出し済み' ? 'bg-green-500' : 'bg-red-500' %> text-white rounded p-1"> <%= ticket.status %> </span>
+        </p>
+        <div class="mt-5">
+          <img src="data:image/png;base64,<%= ticket.qrCode %>" alt="QR Code" />
         </div>
+        <% if (isAuthenticated) { %>
+        <div class="mt-5">
+          <a href="/" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">戻る</a>
+        </div>
+        <% } %>
+        <button id="notifyBtn" class="bg-blue-500 text-white rounded p-2 mt-5">通知をオンにする</button>
+        <!-- ticketId を隠し要素として追加 -->
+        <div id="ticketId" style="display: none"><%= ticketId %></div>
+        <!-- 修正: ticketIdを正しく表示 -->
+      </div>
     </div>
-</body>
+  </body>
 </html>

@@ -294,6 +294,24 @@ app.get("/tickets/:id", async (req, res) => {
   }
 })
 
+app.get("/api/ticket/:id", async (req, res) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) {
+      return res.status(404).json({ message: "チケットが見つかりません" });
+    }
+
+    if (ticket.status === "呼び出し済み") {
+      return res.json({ status: "呼び出し済み" });
+    } else {
+      return res.json({ status: "変わっていない" });
+    }
+  } catch (error) {
+    console.error("チケットの取得に失敗しました:", error);
+    return res.status(500).json({ message: "サーバーエラー" });
+  }
+});
+
 app.get("*", (req, res) => {
   res.render("error", { message: "ページが見つかりません" })
 })

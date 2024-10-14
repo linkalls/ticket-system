@@ -38,7 +38,8 @@ document.getElementById("notifyBtn").addEventListener("click", async () => {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    alert("通知がオンになりました")
+    // ボタンを非表示にする
+    document.getElementById("notifyBtn").style.display = "none";
   } catch (error) {
     console.error("通知のサブスクリプションに失敗しました:", error)
   }
@@ -54,3 +55,26 @@ function urlBase64ToUint8Array(base64String) {
   }
   return outputArray
 }
+
+// チケットの状態を定期的にチェックする関数
+async function checkTicketStatus(ticketId) {
+  try {
+    const response = await fetch(`/api/ticket/${ticketId}`);
+    const data = await response.json();
+
+    if (data.status === "呼び出し済み") {
+      // 状態を更新する
+      const statusElement = document.getElementById("ticketStatus");
+      statusElement.textContent = "呼び出し済み";
+      statusElement.className = "bg-green-500 text-white rounded p-1";
+    } else {
+      console.log("チケットの状態は変わっていません");
+    }
+  } catch (error) {
+    console.error("チケットの状態チェックに失敗しました:", error);
+  }
+}
+
+// 定期的にチケットの状態をチェックする
+const ticketId = document.getElementById("ticketId").textContent.trim();
+setInterval(() => checkTicketStatus(ticketId), 1000); // 1秒ごとにチェック
