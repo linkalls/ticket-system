@@ -283,7 +283,7 @@ app.post("/tickets", async (req, res) => {
       orders: [order._id],
     });
     await ticket.save();
-res.redirect("/");
+res.redirect(`/tickets/${ticket._id}`);
     // res.status(201).json({ message: "整理券が作成されました", ticket });
   } catch (error) {
     console.error("整理券の作成に失敗しました:", error);
