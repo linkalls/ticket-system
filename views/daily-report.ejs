@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日次レポート</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto mt-5 px-4">
+        <h1 class="text-2xl font-bold text-center mb-5">日次レポート</h1>
+        <div class="bg-white p-5 rounded shadow-md">
+            <h2 class="text-xl font-bold mb-3">今日の来客数</h2>
+            <p class="text-lg mb-5">合計: <%= totalPeople %> 人</p>
+            <h2 class="text-xl font-bold mb-3">今日売れた商品の味</h2>
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b">商品名</th>
+                        <th class="py-2 px-4 border-b">売れた数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% soldItems.forEach(item => { %>
+                        <tr>
+                            <td class="py-2 px-4 border-b"><%= item._id %></td>
+                            <td class="py-2 px-4 border-b"><%= item.totalSold %>個</td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-5">
+            <a href="/" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">ホームへ戻る</a>
+        </div>
+    </div>
+</body>
+</html>

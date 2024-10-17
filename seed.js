@@ -6,6 +6,7 @@ dotenv.config();
 
 const peopleSchema = new mongoose.Schema({
   numberOfPeople: { type: Number, required: true },
+  createdAt: { type: Date, default: Date.now }
 });
 
 const People = mongoose.model("People", peopleSchema);
@@ -17,6 +18,7 @@ const orderSchema = new mongoose.Schema({
       number: { type: Number, required: true },
     },
   ],
+  createdAt: { type: Date, default: Date.now }
 });
 
 const Order = mongoose.model("Order", orderSchema);

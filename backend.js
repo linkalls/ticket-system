@@ -56,6 +56,7 @@ mongoose
   
   const peopleSchema = new mongoose.Schema({
     numberOfPeople: { type: Number, required: true },
+    createdAt: { type: Date, default: Date.now }
   });
   
   const People = mongoose.model("People", peopleSchema);
@@ -66,7 +67,9 @@ mongoose
         itemName: { type: String, required: true },
         number: { type: Number, required: true },
       },
+      
     ],
+    createdAt: { type: Date, default: Date.now }
   });
   
   const Order = mongoose.model("Order", orderSchema);
@@ -155,6 +158,58 @@ async function sendNotification(ticketId) {
     console.error("サブスクリプションの取得に失敗しました:", error)
   }
 }
+
+app.get("/daily-report", async (req, res) => {
+  try {
+    // 今日の日付を取得
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 今日の来客数を集計
+    const peopleCount = await People.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: today }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalPeople: { $sum: "$numberOfPeople" }
+        }
+      }
+    ]);
+
+    // 今日売れた商品の味を集計
+    const soldItems = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: today }
+        }
+      },
+      {
+        $unwind: "$items"
+      },
+      {
+        $group: {
+          _id: "$items.itemName",
+          totalSold: { $sum: "$items.number" }
+        }
+      },
+      {
+        $sort: { totalSold: -1 }
+      }
+    ]);
+
+    res.render("daily-report", {
+      totalPeople: peopleCount[0] ? peopleCount[0].totalPeople : 0,
+      soldItems
+    });
+  } catch (error) {
+    console.error("日次レポートの取得に失敗しました:", error);
+    res.status(500).render("error", { message: "日次レポートの取得に失敗しました" });
+  }
+});
 
 // 整理券の状態を更新するエンドポイント
 app.patch("/api/tickets/:id", async (req, res) => {
