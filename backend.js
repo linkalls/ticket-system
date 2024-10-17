@@ -53,24 +53,42 @@ mongoose
     console.error("MongoDB接続エラー:", error.message)
   })
 
-// モデル
-const Admin = mongoose.model(
-  "Admin",
-  new mongoose.Schema({
+  
+  const peopleSchema = new mongoose.Schema({
+    numberOfPeople: { type: Number, required: true },
+  });
+  
+  const People = mongoose.model("People", peopleSchema);
+  
+  const orderSchema = new mongoose.Schema({
+    items: [
+      {
+        itemName: { type: String, required: true },
+        price: { type: Number, required: true },
+      },
+    ],
+  });
+  
+  const Order = mongoose.model("Order", orderSchema);
+  
+  const adminSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-  })
-)
-
-const Ticket = mongoose.model(
-  "Ticket",
-  new mongoose.Schema({
+  });
+  
+  const Admin = mongoose.model("Admin", adminSchema);
+  
+  const ticketSchema = new mongoose.Schema({
     ticketNumber: { type: Number, required: true, unique: true },
     issuedAt: { type: Date, default: Date.now },
     status: { type: String, enum: ["待機中", "呼び出し済み"], default: "待機中" },
-  })
-)
+    people: { type: mongoose.Schema.Types.ObjectId, ref: "People", required: true },
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order", required: true }],
+  });
+  
+  const Ticket = mongoose.model("Ticket", ticketSchema);
+
 
 const Subscription = mongoose.model(
   "Subscription",
@@ -156,9 +174,29 @@ app.patch("/api/tickets/:id", async (req, res) => {
 })
 
 // ルート: ホームページ
+// app.get("/", isAuthenticated, async (req, res) => {
+//   try {
+//     const tickets = await Ticket.find()
+//     const baseUrl = `${req.protocol}://${req.get("host")}`
+
+//     // 各チケットに対してQRコードを生成
+//     const ticketsWithQR = await Promise.all(
+//       tickets.map(async (ticket) => {
+//         const qrCode = await generateQRCode(`${baseUrl}/tickets/${ticket._id}`)
+//         return { ...ticket.toObject(), qrCode }
+//       })
+//     )
+
+//     res.render("index", { tickets: ticketsWithQR, baseUrl })
+//   } catch (error) {
+//     res.status(500).render("error", { message: "サーバーエラーが発生しました" })
+//   }
+// })
 app.get("/", isAuthenticated, async (req, res) => {
   try {
-    const tickets = await Ticket.find()
+    const tickets = await Ticket.find().populate("people").populate("orders")
+    const people = await People.find()
+    const orders = await Order.find()
     const baseUrl = `${req.protocol}://${req.get("host")}`
 
     // 各チケットに対してQRコードを生成
@@ -169,11 +207,13 @@ app.get("/", isAuthenticated, async (req, res) => {
       })
     )
 
-    res.render("index", { tickets: ticketsWithQR, baseUrl })
+    res.render("index", { tickets: ticketsWithQR, people, orders })
   } catch (error) {
-    res.status(500).render("error", { message: "サーバーエラーが発生しました" })
+    console.error("データの取得に失敗しました:", error)
+    res.status(500).render("error", { message: "データの取得に失敗しました" })
   }
 })
+
 
 // ルート: ログインページ
 app.get("/login", (req, res) => {
@@ -311,6 +351,23 @@ app.get("/api/ticket/:id", async (req, res) => {
     return res.status(500).json({ message: "サーバーエラー" });
   }
 });
+
+// ルート: 呼び出し済みチケット一覧ページ
+app.get("/called-tickets", (req, res) => {
+  res.render("called-tickets")
+})
+
+// ルート: 呼び出し済みのチケット一覧
+app.get("/api/tickets/called", async (req, res) => {
+  try {
+    const calledTickets = await Ticket.find({ status: "呼び出し済み" }).select("ticketNumber")
+    const ticketNumbers = calledTickets.map(ticket => ticket.ticketNumber)
+    res.json(ticketNumbers)
+  } catch (error) {
+    console.error("呼び出し済みチケットの取得に失敗しました:", error)
+    res.status(500).json({ message: "サーバーエラー" })
+  }
+})
 
 app.get("*", (req, res) => {
   res.render("error", { message: "ページが見つかりません" })
