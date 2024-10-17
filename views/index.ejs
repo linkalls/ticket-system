@@ -27,14 +27,18 @@
                             <%= ticket.status %>
                         </span>
                     </div>
+                    <% if (ticket.people) { %>
                     <div class="flex-1 mb-2 sm:mb-0">
                         人数: <%= ticket.people.numberOfPeople %>人
                     </div>
+                    <% } %>
                     <div class="flex-1 mb-2 sm:mb-0">
                         注文内容:
                         <ul>
                           <% ticket.orders.forEach(order => { %>
-                            <li><%= order.items.map(item => item.itemName).join(", ") %></li>
+                            <% order.items.forEach(item => { %>
+                              <li><%= item.itemName %> - <%= item.number %>個</li>
+                            <% }); %>
                           <% }); %>
                         </ul>
                     </div>
@@ -60,31 +64,24 @@
     <div id="create-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <h2 class="text-xl font-bold mb-4">新規整理券発行</h2>
-        <form action="/tickets" method="POST" id="create-form">
-          <div class="mb-4">
-            <label for="customerName" class="block text-gray-700 text-sm font-bold mb-2">顧客名</label>
-            <input type="text" id="customerName" name="customerName" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-          </div>
-          <div class="mb-4">
-            <label for="phoneNumber" class="block text-gray-700 text-sm font-bold mb-2">電話番号</label>
-            <input type="tel" id="phoneNumber" name="phoneNumber" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-          </div>
+        <form action="/tickets" method="POST" id="create-form" onsubmit="return validateForm()">
           <div class="mb-4">
             <label for="numberOfPeople" class="block text-gray-700 text-sm font-bold mb-2">人数</label>
-            <select id="numberOfPeople" name="numberOfPeople" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              <% people.forEach(person => { %>
-                <option value="<%= person._id %>"><%= person.numberOfPeople %>人</option>
-              <% }); %>
-            </select>
+            <input type="number" id="numberOfPeople" name="numberOfPeople" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
           </div>
           <div class="mb-4">
             <label for="orderItems" class="block text-gray-700 text-sm font-bold mb-2">注文された商品</label>
-            <select id="orderItems" name="orderItems" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <select id="orderItems" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <option value="">商品を選択</option>
               <% orders.forEach(order => { %>
-                <option value="<%= order._id %>"><%= order.items.map(item => item.itemName).join(", ") %></option>
+                <% order.items.forEach(item => { %>
+                  <option value="<%= item.itemName %>"><%= item.itemName %></option>
+                <% }); %>
               <% }); %>
             </select>
+            <button type="button" onclick="addOrderItem()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-2">追加</button>
           </div>
+          <div id="orderItemsContainer" class="mb-4"></div>
           <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             発行
           </button>
@@ -101,6 +98,51 @@
       
       function hideCreateModal() {
         document.getElementById('create-modal').classList.add('hidden');
+      }
+
+      function addOrderItem() {
+        const orderItemsSelect = document.getElementById('orderItems');
+        const selectedItem = orderItemsSelect.value;
+        if (selectedItem) {
+          const orderItemsContainer = document.getElementById('orderItemsContainer');
+          const newItemDiv = document.createElement('div');
+          newItemDiv.classList.add('mb-2');
+          newItemDiv.innerHTML = `
+            <label class="block text-gray-700 text-sm font-bold mb-2">${selectedItem}</label>
+            <input type="hidden" name="orderItems[]" value="${selectedItem}">
+            <input type="number" name="orderNumbers[]" placeholder="数量" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+          `;
+          orderItemsContainer.appendChild(newItemDiv);
+          orderItemsSelect.value = '';
+        }
+      }
+
+      function validateForm() {
+        const numberOfPeople = document.getElementById('numberOfPeople').value;
+        const orderItems = document.getElementsByName('orderItems[]');
+        const orderNumbers = document.getElementsByName('orderNumbers[]');
+
+        if (!numberOfPeople || orderItems.length === 0 || orderNumbers.length === 0) {
+          alert('人数と注文された商品は必須です。');
+          return false;
+        }
+
+        for (let i = 0; i < orderItems.length; i++) {
+          if (!orderItems[i].value || !orderNumbers[i].value) {
+            alert('すべての商品と数量を入力してください。');
+            return false;
+          }
+        }
+
+        // 空のアイテムを削除
+        const form = document.getElementById('create-form');
+        for (let i = orderItems.length - 1; i >= 0; i--) {
+          if (!orderItems[i].value || !orderNumbers[i].value) {
+            orderItems[i].parentElement.remove();
+          }
+        }
+
+        return true;
       }
     </script>
 </body>

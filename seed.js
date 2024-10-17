@@ -14,7 +14,7 @@ const orderSchema = new mongoose.Schema({
   items: [
     {
       itemName: { type: String, required: true },
-      price: { type: Number, required: true },
+      number: { type: Number, required: true },
     },
   ],
 });
@@ -64,7 +64,9 @@ async function seedDatabase() {
     const peopleData = [
       { numberOfPeople: 2 },
       { numberOfPeople: 4 },
-      { numberOfPeople: 3 },
+      { numberOfPeople: 8 },
+      { numberOfPeople: 9 },
+      { numberOfPeople: 1 },
     ];
 
     const people = await People.insertMany(peopleData);
@@ -72,11 +74,11 @@ async function seedDatabase() {
 
     // Orderのデフォルトデータを作成
     const orderData = [
-      { items: [{ itemName: "サイダー", price: 100 }, { itemName: "いちご", price: 150 }] },
-      { items: [{ itemName: "パイン", price: 200 }, { itemName: "ブドウ", price: 250 }] },
-      { items: [{ itemName: "メロン", price: 300 }, { itemName: "ラムネ", price: 350 }] },
-      { items: [{ itemName: "イチゴ", price: 400 }, { itemName: "レモン", price: 450 }] },
-      { items: [{ itemName: "コーラ", price: 500 }] },
+      { items: [{ itemName: "サイダー", number: 100 }, { itemName: "いちご", number: 150 }] },
+      { items: [{ itemName: "パイン", number: 200 }, { itemName: "ブドウ", number: 250 }] },
+      { items: [{ itemName: "メロン", number: 300 }, { itemName: "ラムネ", number: 350 }] },
+      { items: [{ itemName: "イチゴ", number: 400 }, { itemName: "レモン", number: 450 }] },
+      { items: [{ itemName: "コーラ", number: 500 }] },
     ];
 
     const orders = await Order.insertMany(orderData);

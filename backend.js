@@ -64,7 +64,7 @@ mongoose
     items: [
       {
         itemName: { type: String, required: true },
-        price: { type: Number, required: true },
+        number: { type: Number, required: true },
       },
     ],
   });
@@ -252,29 +252,44 @@ app.get("/logout", (req, res) => {
 })
 
 // ルート: 新規整理券発行
-app.post("/tickets", isAuthenticated, async (req, res) => {
+app.post("/tickets", async (req, res) => {
   try {
-    const lastTicket = await Ticket.findOne().sort({ ticketNumber: -1 })
-    const newTicketNumber = lastTicket ? lastTicket.ticketNumber + 1 : 1
-    const newTicket = new Ticket({
-      ticketNumber: newTicketNumber,
-      status: "待機中",
-      issuedAt: new Date(),
-    })
-    await newTicket.save()
+    const { numberOfPeople, orderItems, orderNumbers } = req.body;
+    console.log(req.body);
 
-    // QRコード生成
-    const baseUrl = `${req.protocol}://${req.get("host")}`
-    const qrCode = await generateQRCode(`${baseUrl}/tickets/${newTicket._id}`)
-    console.log(req.cookies.token)
-    const isAuthenticated = req.cookies.token // ここで認証情報を取得
-    // 新規作成したチケットの詳細を表示
-    res.render("detail", { ticket: { ...newTicket.toObject(), qrCode }, isAuthenticated, ticketId: newTicket._id }) // isAuthenticatedを渡す
+    // Peopleのデータを作成
+    const people = new People({ numberOfPeople });
+    await people.save();
+
+    // Orderのデータを作成
+    const items = orderItems
+      .map((itemName, index) => ({
+        itemName,
+        number: orderNumbers[index],
+      }))
+      .filter(item => item.itemName && item.number !== undefined);
+
+    if (items.length === 0) {
+      return res.status(400).json({ error: "有効な注文項目がありません" });
+    }
+
+    const order = new Order({ items });
+    await order.save();
+
+    // Ticketのデータを作成
+    const ticket = new Ticket({
+      ticketNumber: await Ticket.countDocuments() + 1,
+      people: people._id,
+      orders: [order._id],
+    });
+    await ticket.save();
+res.redirect("/");
+    // res.status(201).json({ message: "整理券が作成されました", ticket });
   } catch (error) {
-    console.error(error)
-    res.status(500).render("error", { message: "整理券の発行に失敗しました" })
+    console.error("整理券の作成に失敗しました:", error);
+    res.status(500).render("error", { message: "サーバーエラーが発生しました" });
   }
-})
+});
 
 // ルート: 整理券の状態更新
 app.post("/tickets/:id/update", isAuthenticated, async (req, res) => {
@@ -314,25 +329,30 @@ app.post("/tickets/:id/delete", isAuthenticated, async (req, res) => {
 // ルート: 整理券詳細
 app.get("/tickets/:id", async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id)
-    //   console.log(req.params.id);
+    const ticket = await Ticket.findById(req.params.id).populate("people").populate({
+      path: "orders",
+      populate: {
+        path: "items",
+      },
+    });
+
     if (!ticket) {
-      return res.status(404).render("error", { message: "整理券が見つかりません" })
+      return res.status(404).render("error", { message: "整理券が見つかりません" });
     }
 
     // QRコード生成
-    const baseUrl = `${req.protocol}://${req.get("host")}`
-    const qrCode = await generateQRCode(`${baseUrl}/tickets/${ticket._id}`)
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const qrCode = await generateQRCode(`${baseUrl}/tickets/${ticket._id}`);
 
     // 認証情報をテンプレートに渡す
-    const isAuthenticated = !!req.cookies.token
+    const isAuthenticated = !!req.cookies.token;
 
-    res.render("detail", { ticket: { ...ticket.toObject(), qrCode }, isAuthenticated, ticketId: ticket._id })
+    res.render("detail", { ticket: { ...ticket.toObject(), qrCode }, isAuthenticated, ticketId: ticket._id });
   } catch (error) {
-    console.error(error)
-    res.status(500).render("error", { message: "整理券の取得に失敗しました" })
+    console.error(error);
+    res.status(500).render("error", { message: "整理券の取得に失敗しました" });
   }
-})
+});
 
 app.get("/api/ticket/:id", async (req, res) => {
   try {

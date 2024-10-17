@@ -22,14 +22,28 @@
         <div class="mt-5">
           <img src="data:image/png;base64,<%= ticket.qrCode %>" alt="QR Code" />
         </div>
+        <div class="mt-5">
+          <h2 class="text-xl font-bold mb-3">注文された商品</h2>
+          <ul class="list-disc pl-5">
+            <% ticket.orders.forEach(order => { %>
+              <% order.items.forEach(item => { %>
+                <li><%= item.itemName %> - <%= item.number %>個</li>
+              <% }); %>
+            <% }); %>
+          </ul>
+        </div>
         <% if (isAuthenticated) { %>
         <div class="mt-5">
           <a href="/" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">戻る</a>
         </div>
         <% } %>
-        <button id="notifyBtn" class="bg-blue-500 text-white rounded p-2 mt-5">通知をオンにする</button>
-        <!-- ticketId を隠し要素として追加 -->
-        <div id="ticketId" style="display: none"><%= ticketId %></div>
+        <!-- AndroidおよびWindowsユーザーにのみ表示 -->
+        <script>
+          if (/Android|Windows/i.test(navigator.userAgent)) {
+            document.write('<button id="notifyBtn" class="bg-blue-500 text-white rounded p-2 mt-5">通知をオンにする</button>');
+            document.write('<div id="ticketId" style="display: none"><%= ticketId %></div>');
+          }
+        </script>
         <!-- 修正: ticketIdを正しく表示 -->
       </div>
     </div>
