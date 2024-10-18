@@ -2,9 +2,12 @@ import express from "express"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import bcrypt from "bcryptjs"
+import flash from "connect-flash";
+import session from "express-session";
 import cookieParser from "cookie-parser"
 import { fileURLToPath } from "url"
 import { dirname, join } from "path"
+
 // import { fileURLToPath } from "node:url"
 // import { dirname, join } from "node:path"
 
@@ -52,6 +55,21 @@ mongoose
   .catch((error) => {
     console.error("MongoDB接続エラー:", error.message)
   })
+
+  // セッションとフラッシュメッセージの設定
+app.use(session({
+  secret: 'your_secret_key',
+  resave: false,
+  saveUninitialized: true
+}));
+app.use(flash());
+
+// フラッシュメッセージをローカル変数に設定
+app.use((req, res, next) => {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  next();
+});
 
   
   const peopleSchema = new mongoose.Schema({
@@ -110,6 +128,8 @@ const isAuthenticated = (req, res, next) => {
     res.redirect("/login")
   }
 }
+
+
 
 // サブスクリプションを保存するための配列
 let subscriptions = []
@@ -228,6 +248,29 @@ app.patch("/api/tickets/:id", async (req, res) => {
   }
 })
 
+app.post('/tickets/:id/deleteAll', isAuthenticated, async (req, res) => {
+  try {
+    const ticketId = req.params.id;
+    const ticket = await Ticket.findById(ticketId);
+
+    if (!ticket) {
+      return res.status(404).send('Ticket not found');
+    }
+
+    // People と Order の削除
+    await People.findByIdAndDelete(ticket.people);
+    await Order.deleteMany({ _id: { $in: ticket.orders } });
+
+    // Ticket の削除
+    await Ticket.findByIdAndDelete(ticketId);
+    req.flash('success_msg', 'Ticket and related data deleted successfully');
+    res.redirect('/');
+  } catch (error) {
+    req.flash('error_msg', 'An error occurred while deleting the ticket');
+    res.status(500).redirect('/');
+}
+})
+
 // ルート: ホームページ
 // app.get("/", isAuthenticated, async (req, res) => {
 //   try {
@@ -338,6 +381,7 @@ app.post("/tickets", async (req, res) => {
       orders: [order._id],
     });
     await ticket.save();
+    req.flash('success_msg', `ticket番号${ticket.ticketNumber}を発行しました`);
 res.redirect(`/tickets/${ticket._id}`);
     // res.status(201).json({ message: "整理券が作成されました", ticket });
   } catch (error) {
@@ -363,7 +407,7 @@ app.post("/tickets/:id/update", isAuthenticated, async (req, res) => {
       console.log(`Calling sendNotification for ticketId: ${ticket._id}`) // ログを追加
       await sendNotification(ticket._id)
     }
-
+    req.flash('success_msg', 'ticket情報をアップデートしました');
     res.redirect("/")
   } catch (error) {
     console.error("状態の更新に失敗しました:", error)
